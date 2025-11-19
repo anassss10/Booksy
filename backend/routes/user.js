@@ -10,54 +10,71 @@ const VALID_ROLES = ["user", "admin"];
 // signup
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password, address, role } = req.body;
+    const { username, email, password, address, role, mobile } = req.body;
 
+    // Validate Username
     if (!username || username.length < 4) {
-      return res
-        .status(400)
-        .json({ message: "Username must be at least 4 characters long" });
+      return res.status(400).json({ message: "Username must be at least 4 characters long" });
     }
 
+    // Check Username Duplication
     const existingUsername = await User.findOne({ username: username });
     if (existingUsername) {
       return res.status(400).json({ message: "Username already exists" });
     }
 
+    // Check Email Duplication
     const existingEmail = await User.findOne({ email: email });
     if (existingEmail) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Validate Password
     if (!password || password.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long" });
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
     }
 
-    // Validate role if provided; default to "user"
+    // Validate Mobile Number
+    if (!mobile || mobile.length !== 10) {
+      return res.status(400).json({ message: "Mobile number must be exactly 10 digits" });
+    }
+
+    // Check Duplicate Mobile Number
+    const existingMobile = await User.findOne({ mobile: mobile });
+    if (existingMobile) {
+      return res.status(400).json({ message: "Mobile number already exists" });
+    }
+
+    // Validate role
     let roleToSave = "user";
     if (role) {
       if (typeof role !== "string" || !VALID_ROLES.includes(role.toLowerCase())) {
-        return res
-          .status(400)
-          .json({ message: `Role must be one of: ${VALID_ROLES.join(", ")}` });
+        return res.status(400).json({
+          message: `Role must be one of: ${VALID_ROLES.join(", ")}`
+        });
       }
       roleToSave = role.toLowerCase();
     }
 
+    // Encrypt Password
     const hashPass = await bcrypt.hash(password, 10);
 
+    // Create New User
     const newUser = new User({
-      username: username,
-      email: email,
+      username,
+      email,
       password: hashPass,
-      address: address,
-      role: roleToSave, // store as string: "user" or "admin"
+      address,
+      mobile,
+      role: roleToSave,
     });
 
+    // Save to Database
     await newUser.save();
     console.log("Signup request body:", req.body);
+
     return res.status(201).json({ message: "User created successfully" });
+
   } catch (error) {
     console.error("Signup Error:", error);
     return res.status(500).json({ message: error.message });
@@ -142,6 +159,29 @@ router.put("/updateaddress", authenticateToken, async (req, res) => {
     return res.status(200).json({ message: "Address updated successfully" });
   } catch (error) {
     console.error("UpdateAddress Error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.put("/updatemobile", async (req, res) => {
+  try {
+    const userId = req.headers.id;
+    const { mobile } = req.body;
+
+    if (!mobile || mobile.length !== 10) {
+      return res.status(400).json({ message: "Mobile number must be exactly 10 digits" });
+    }
+
+    const existing = await User.findOne({ mobile });
+    if (existing) {
+      return res.status(400).json({ message: "Mobile number already in use" });
+    }
+
+    await User.findByIdAndUpdate(userId, { mobile });
+
+    return res.status(200).json({ message: "Mobile number updated successfully" });
+
+  } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 });

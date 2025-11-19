@@ -1,68 +1,160 @@
-import React from 'react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const UserData = ({ userDivData, userDiv, setUserDiv }) => {
+const SignUp = () => {
+  const [Values, setValues] = useState({
+    username: "",
+    email: "",
+    password: "",
+    mobile: "",
+    address: "",
+    role: "user",
+  });
+
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const Change = (e) => {
+    const { name, value } = e.target;
+    setValues({ ...Values, [name]: value });
+  };
+
+  const Submit = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (
+        Values.username.length < 4 || Values.username.length > 15 ||
+        Values.password.length < 8 || Values.password.length > 20 ||
+        Values.email.length < 8 || Values.email.length > 30 ||
+        Values.mobile.length !== 10 ||
+        Values.address.length < 6 || Values.address.length > 50
+      ) {
+        alert(
+          "Please enter valid details:\n" +
+          "- Username (4-15 chars)\n" +
+          "- Password (8-20 chars)\n" +
+          "- Email (10-30 chars)\n" +
+          "- Mobile (10 digits)\n" +
+          "- Address (10-50 chars)"
+        );
+        return;
+      }
+
+      const response = await axios.post("http://localhost:3000/api/v1/signup", Values);
+      console.log(response);
+      alert(response.data.message);
+      navigate("/Login");
+    } catch (err) {
+      setError(err.response?.data?.message || "Signup failed");
+      alert(err.response?.data?.message || "Signup failed");
+    }
+  };
+
   return (
-    <>
-      {/* Overlay */}
-      <div className={`${userDiv} fixed inset-0 bg-zinc-900 bg-opacity-80 flex justify-center items-center z-50`}>
-        {/* Modal Box */}
-        <div className="bg-black bg-opacity-90 p-6 rounded-xl shadow-2xl w-full max-w-md relative text-yellow-300">
-          {/* Close Button */}
-          <button
-            onClick={() => setUserDiv("hidden")}
-            className="absolute top-3 right-3 text-yellow-300 hover:text-red-500 text-xl font-bold"
-          >
-            &times;
-          </button>
+    <div className="min-h-screen bg-zinc-900 flex items-center justify-center px-4">
+      <div className="bg-zinc-800 p-8 rounded-lg shadow-md w-full max-w-md text-white">
+        <h2 className="text-3xl font-bold mb-6 text-yellow-400 text-center">Sign Up</h2>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-          <h2 className="text-2xl font-bold mb-5 text-center">User Details</h2>
+        <form onSubmit={Submit} className="space-y-4">
 
-          {/* User Info Fields */}
-          <div className="flex flex-col gap-4 text-base">
-            <div>
-              <label htmlFor="name" className="block font-semibold mb-1">Name</label>
-              <input
-                type="text"
-                id="name"
-                value={userDivData?.username || ""}
-                disabled
-                className="w-full p-2 rounded-md bg-zinc-900 text-yellow-300"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block font-semibold mb-1">Email</label>
-              <input
-                type="email"
-                id="email"
-                value={userDivData?.email || ""}
-                disabled
-                className="w-full p-2 rounded-md bg-zinc-900 text-yellow-300"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="address" className="block font-semibold mb-1">Address</label>
-              <input
-                type="text"
-                id="address"
-                value={userDivData?.address || ""}
-                disabled
-                className="w-full p-2 rounded-md bg-zinc-900 text-yellow-300"
-              />
-            </div>
+          {/* Username */}
+          <div>
+            <label className="block text-sm mb-1">Username</label>
+            <input
+              type="text"
+              name="username"
+              required
+              value={Values.username}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            />
           </div>
 
+          {/* Email */}
+          <div>
+            <label className="block text-sm mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              required
+              value={Values.email}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              required
+              value={Values.password}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+
+          {/* Mobile Number */}
+          <div>
+            <label className="block text-sm mb-1">Mobile Number</label>
+            <input
+              type="number"
+              name="mobile"
+              required
+              value={Values.mobile}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-sm mb-1">Role</label>
+            <select
+              name="role"
+              value={Values.role}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-sm mb-1">Address</label>
+            <input
+              type="text"
+              name="address"
+              required
+              value={Values.address}
+              onChange={Change}
+              className="w-full p-2 rounded bg-zinc-700 border border-zinc-600 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+
+          {/* Submit Button */}
           <button
-            onClick={() => setUserDiv("hidden")}
-            className="mt-6 w-full bg-yellow-300 hover:bg-yellow-400 text-black font-semibold py-2 px-4 rounded-md text-base"
+            type="submit"
+            className="w-full py-2 mt-2 bg-yellow-400 text-black font-semibold rounded hover:bg-yellow-500 transition"
           >
-            Close
+            Sign Up
           </button>
-        </div>
+        </form>
+
+        <p className="mt-6 text-sm text-center text-gray-300">
+          Already have an account?{" "}
+          <Link to="/Login" className="text-yellow-400 hover:underline">Login</Link>
+        </p>
       </div>
-    </>
+    </div>
   );
 };
 
-export default UserData;
+export default SignUp;
